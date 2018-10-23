@@ -21,15 +21,16 @@ public class GFCacheConfig {
     public int LOCATOR_PORT;
     public String LOG_LEVEL = null;
     public String LOG_FILE_PATH = null;
-    public static final String PASSENGER_REGION = "passenger";
+    public static final String PASSENGER_REGION = "personalisedData";
 
     public void getProperties() {
         Properties prop = new Properties();
         InputStream input = null;
 
         try {
-            input = new FileInputStream("appllication.properties");
-
+            //input = new FileInputStream("application.properties");
+            input = this.getClass().getClassLoader().getResourceAsStream("application.properties");
+            prop.load(input);
             LOCATOR_HOST = prop.getProperty("locator.host");
             LOCATOR_PORT = Integer.parseInt(prop.getProperty("locator.port"));
             LOG_LEVEL = prop.getProperty("log.level");

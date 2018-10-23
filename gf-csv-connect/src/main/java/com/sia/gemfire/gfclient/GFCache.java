@@ -17,9 +17,9 @@ public interface GFCache {
      * Load data into gemfire distributed cache
      * @param map, collection to store in gemfire.
      */
-    public void saveAll(String regionName, Map<Long, String> map);
+    public void saveAll(String regionName, Map<String, String> map);
 
-    public String get(Long key);
+    public String get(String key);
 
     public List<String> getCustomerDetailsByCEID(String ceid) throws NameResolutionException, TypeMismatchException, QueryInvocationTargetException, FunctionDomainException;
 }

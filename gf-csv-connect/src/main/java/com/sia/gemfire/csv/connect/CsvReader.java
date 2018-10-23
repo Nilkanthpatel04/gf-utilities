@@ -5,7 +5,13 @@ import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.sia.gemfire.gfclient.GFCache;
+import com.sia.gemfire.gfclient.impl.GFCacheImpl;
 import com.sia.gemfire.gfclient.impl.LocalCacheImpl;
+import org.apache.commons.lang.StringUtils;
+import org.apache.geode.cache.query.FunctionDomainException;
+import org.apache.geode.cache.query.NameResolutionException;
+import org.apache.geode.cache.query.QueryInvocationTargetException;
+import org.apache.geode.cache.query.TypeMismatchException;
 
 
 import java.io.Reader;
@@ -32,7 +38,7 @@ public class CsvReader {
             reader.close();
             csvReader.close();
         } catch (Exception ex) {
-            //Helpers.err(ex);
+            ex.printStackTrace();
             System.out.println("NNN Exception :: " + " " + ex);
         }
         return list;
@@ -82,31 +88,54 @@ public class CsvReader {
             reader.close();
             csvReader.close();
         } catch (Exception ex) {
+            ex.printStackTrace();
             System.out.println("NNN Exception :: " + " " + ex);
         }
         return list;
     }
 
     private static void saveBatch(List<String[]> list){
-        GFCache cache = new LocalCacheImpl();
-        Map<Long, String> localMap = new HashMap<>();
+        //GFCache cache = new LocalCacheImpl();
+        GFCache cache = new GFCacheImpl();
+
+        Map<String, String> localMap = new HashMap<>();
 
         System.out.println("Preparing Batch of size = 2");
         for(String[] row : list) {
             System.out.println(" => " + Arrays.toString(row));
 
-            Long key = new Long(row[0]); //row[0] is ceid (cst_nbr)
+            String ceid =  row[0]; //row[0] is ceid (cst_nbr)
             //TODO: fetch (OQL) RUPU_ID(int_id), KF_ID(acc_nbr) from /customer
-            cache.getCustomerDetailsByCEID();
+            String key = null;
+            try {
+                List<String> KFRUList = cache.getCustomerDetailsByCEID(ceid);
+                if(KFRUList.size() > 0 && KFRUList.get(0) != null && !StringUtils.isEmpty(KFRUList.get(0))){
+                    key = KFRUList.get(0);
+                } else if (KFRUList.size() > 0 && KFRUList.get(1) != null && !StringUtils.isEmpty(KFRUList.get(1))){
+                    key = KFRUList.get(1);
+                }else {
+                    key = null;
+                }
 
-            //String value =  Arrays.asList(row).stream().skip(1).collect(Collectors.joining(","));
-            String value =  Arrays.asList(row).stream().collect(Collectors.joining(","));
-            localMap.put(key, value);
+                //String value =  Arrays.asList(row).stream().skip(1).collect(Collectors.joining(","));
+                String value =  Arrays.asList(row).stream().collect(Collectors.joining(","));
+
+                if(key != null) {
+                    localMap.put(key, value);
+                }
+            } catch (NameResolutionException e) {
+                e.printStackTrace();
+            } catch (TypeMismatchException e) {
+                e.printStackTrace();
+            } catch (QueryInvocationTargetException e) {
+                e.printStackTrace();
+            } catch (FunctionDomainException e) {
+                e.printStackTrace();
+            }
         }
-        cache.saveAll("localMap", localMap);
+        cache.saveAll("personalisedData", localMap);
     }
 
 }
-
 
 
